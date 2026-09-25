@@ -61,6 +61,14 @@ function hasActiveSession() {
   }
 }
 
+function refreshAccountActions() {
+  const signedIn = hasActiveSession();
+  const accountButton = document.querySelector("#accountButton");
+  const logoutButton = document.querySelector("#logoutButton");
+  if (accountButton) accountButton.hidden = signedIn;
+  if (logoutButton) logoutButton.hidden = !signedIn;
+}
+
 function openAuthModal(mode = "register") {
   if (!authModal) return;
   setAuthMode(mode);
@@ -93,6 +101,13 @@ document.querySelectorAll("[data-open-auth]").forEach((button) => button.addEven
 document.querySelectorAll("[data-close-auth]").forEach((button) => button.addEventListener("click", closeAuthModal));
 authModeButtons.forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
 if (authModal) authModal.addEventListener("click", (event) => { if (event.target === authModal) closeAuthModal(); });
+
+document.querySelector("#logoutButton")?.addEventListener("click", () => {
+  sessionStorage.removeItem("fxsudanCurrentUser");
+  document.body.classList.add("auth-required");
+  refreshAccountActions();
+  openAuthModal("login");
+});
 
 if (authForm) {
   authForm.addEventListener("submit", (event) => {
@@ -127,10 +142,12 @@ if (authForm) {
       }
       sessionStorage.setItem("fxsudanCurrentUser", JSON.stringify(learner));
     }
+    refreshAccountActions();
     closeAuthModal();
   });
 }
 
+refreshAccountActions();
 if (hasActiveSession()) {
   document.body.classList.remove("auth-required");
   refreshChartbotAccess();
