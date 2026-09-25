@@ -294,6 +294,33 @@ a { color: inherit; text-decoration: none; }
 .auth-modal h2 { margin: 0; font-size: 2rem; letter-spacing: -0.04em; }.auth-modal > .muted { margin: 0.7rem 0 1.5rem; font-size: 0.8rem; }.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; margin-bottom: 1.5rem; padding: 0.25rem; border: 1px solid var(--line); border-radius: 8px; }.auth-tab { border: 0; border-radius: 6px; padding: 0.65rem; color: var(--muted); background: transparent; font-size: 0.7rem; font-weight: 800; }.auth-tab.active { color: #35131e; background: var(--accent); }.auth-modal .field-group { margin-bottom: 1rem; }.auth-modal .form-message { min-height: 2.1rem; margin-bottom: 0.4rem; }
 .account-id { border: 1px solid rgba(228, 160, 170, 0.3); border-radius: 999px; padding: 0.4rem 0.65rem; color: var(--accent); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em; }
 
+.site-page.auth-required > .site-header,
+.site-page.auth-required > main,
+.site-page.auth-required > .flag-backdrop { opacity: 0.1; filter: blur(2px); pointer-events: none; user-select: none; }
+.site-page.auth-required > #authModal { background: rgba(5, 8, 12, 0.52); backdrop-filter: blur(2px); }
+
+.chartbot-section { width: min(1180px, 100%); margin: 0 auto; border-top: 1px solid var(--line); padding: clamp(5rem, 10vw, 8rem) clamp(1.25rem, 4vw, 2.5rem); }
+.chartbot-panel { border: 1px solid rgba(228, 160, 170, 0.3); border-radius: 12px; padding: clamp(1.4rem, 4vw, 2.2rem); background: linear-gradient(120deg, rgba(126, 32, 50, 0.38), rgba(30, 20, 28, 0.72)); }
+.chartbot-offer { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 1.5rem; }
+.chartbot-offer h3 { margin: 0; color: var(--text); font-size: 2rem; }
+.chartbot-offer h3 span { margin-left: 0.4rem; color: var(--accent); font-size: 0.85rem; }
+.chartbot-offer .muted { max-width: 600px; margin: 0.5rem 0 0; font-size: 0.8rem; }
+#chartbotSubscribe { width: auto; min-width: 180px; gap: 1rem; }
+.bot-status { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 1.2rem; color: var(--accent); font-size: 0.76rem; font-weight: 800; }
+.bot-status[hidden] { display: none; }
+.bot-status .status-dot { flex: 0 0 7px; }
+.chart-upload { display: grid; justify-items: center; gap: 0.55rem; min-height: 190px; border: 1px dashed rgba(228, 160, 170, 0.45); border-radius: 8px; padding: 2rem; color: var(--text); background: rgba(16, 12, 18, 0.45); text-align: center; cursor: pointer; }
+.chart-upload:hover { border-color: var(--accent); background: rgba(142, 38, 56, 0.16); }
+.chart-upload small { color: var(--muted); font-size: 0.68rem; }
+.chart-upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.upload-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(228, 160, 170, 0.4); border-radius: 50%; color: var(--accent); font-size: 1.5rem; }
+.chart-preview { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+.chart-preview img { display: block; width: min(100%, 440px); max-height: 320px; object-fit: contain; border: 1px solid var(--line); border-radius: 8px; background: #100c12; }
+.analyze-button { width: auto; min-width: 220px; gap: 1rem; margin-top: 1rem; }
+.analyze-button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.chartbot-panel .selection-message { margin-bottom: 0; }
+.payment-choice { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 @media (max-width: 760px) {
   .flag-backdrop { top: 5rem; right: -11rem; width: 115vw; height: 70vw; opacity: 0.14; }
   .trust-heading, .support-section { grid-template-columns: 1fr; flex-direction: column; align-items: flex-start; }
@@ -301,4 +328,8 @@ a { color: inherit; text-decoration: none; }
   .support-section { gap: 2.5rem; }
   .site-footer { align-items: flex-start; flex-direction: column; }
   .offer-card { grid-template-columns: 1fr; gap: 1.2rem; }.offer-price { text-align: left; }.offer-card .outline-button { justify-self: start; }
+  .chartbot-offer { align-items: stretch; flex-direction: column; gap: 1.3rem; }
+  #chartbotSubscribe, .analyze-button { width: 100%; }
+  .chart-preview { align-items: flex-start; flex-direction: column; }
+  .payment-choice { grid-template-columns: 1fr; }
 }

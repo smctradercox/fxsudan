@@ -1,14 +1,8 @@
 const PAYMENT_CONFIG = {
-  price: 49,
   TRC20: {
     label: "TRC-20",
-    address: "THJK6cGz7YyNiP1o81yFPc22SCRj166pyy",
+    address: "TCTEDNkPBrrdfbbG8iF4HLvEeeYCVYSBsh",
     explorer: "https://tronscan.org/"
-  },
-  BEP20: {
-    label: "BEP-20",
-    address: "YOUR_BEP20_WALLET_ADDRESS",
-    explorer: "https://bscscan.com/"
   }
 };
 
@@ -23,7 +17,7 @@ const paymentAmount = document.querySelector("#paymentAmount");
 const paymentChoices = document.querySelectorAll("[data-payment-product]");
 const unlockLinks = document.querySelector("#unlockLinks");
 let selectedProduct = "course";
-const PRODUCT_PRICES = { course: 89, signals: 75 };
+const PRODUCT_PRICES = { course: 89, signals: 75, chartbot: 30 };
 const authModal = document.querySelector("#authModal");
 const authForm = document.querySelector("#authForm");
 const authMessage = document.querySelector("#authMessage");
@@ -34,18 +28,53 @@ function getUsers() {
   return JSON.parse(localStorage.getItem("fxsudanUsers") || "[]");
 }
 
+function getSignedInUser() {
+  try {
+    return JSON.parse(sessionStorage.getItem("fxsudanCurrentUser") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function getChartbotStorageKey() {
+  const user = getSignedInUser();
+  return user?.username ? `fxsudanChartbot:${user.username}` : null;
+}
+
+function refreshChartbotAccess() {
+  const storageKey = getChartbotStorageKey();
+  const request = storageKey ? JSON.parse(localStorage.getItem(storageKey) || "null") : null;
+  const subscribeButton = document.querySelector("#chartbotSubscribe");
+  const status = document.querySelector("#chartbotStatus");
+  if (!subscribeButton || !status) return;
+  subscribeButton.hidden = Boolean(request);
+  status.hidden = !request;
+}
+
+function hasActiveSession() {
+  try {
+    const user = JSON.parse(sessionStorage.getItem("fxsudanCurrentUser") || "null");
+    return Boolean(user && user.username);
+  } catch {
+    sessionStorage.removeItem("fxsudanCurrentUser");
+    return false;
+  }
+}
+
 function openAuthModal(mode = "register") {
   if (!authModal) return;
   setAuthMode(mode);
   authModal.hidden = false;
   document.body.classList.add("modal-open");
+  document.querySelector("[data-close-auth]").hidden = !hasActiveSession();
   document.querySelector("#authUsername").focus();
 }
 
 function closeAuthModal() {
-  if (!authModal) return;
+  if (!authModal || !hasActiveSession()) return;
   authModal.hidden = true;
   document.body.classList.remove("modal-open");
+  document.body.classList.remove("auth-required");
 }
 
 function setAuthMode(mode) {
@@ -98,8 +127,15 @@ if (authForm) {
       }
       sessionStorage.setItem("fxsudanCurrentUser", JSON.stringify(learner));
     }
-    window.location.href = "dashboard.html";
+    closeAuthModal();
   });
+}
+
+if (hasActiveSession()) {
+  document.body.classList.remove("auth-required");
+  refreshChartbotAccess();
+} else {
+  openAuthModal(getUsers().length ? "login" : "register");
 }
 
 const currentUser = JSON.parse(sessionStorage.getItem("fxsudanCurrentUser") || "null");
@@ -118,6 +154,10 @@ if (document.querySelector("#logoutAccount")) {
 
 function openPaymentModal(product = "course") {
   if (!paymentModal) return;
+  if (!hasActiveSession()) {
+    openAuthModal(getUsers().length ? "login" : "register");
+    return;
+  }
   paymentModal.hidden = false;
   document.body.classList.add("modal-open");
   selectPaymentProduct(product);
@@ -127,6 +167,7 @@ function openPaymentModal(product = "course") {
 function selectPaymentProduct(product) {
   selectedProduct = product;
   const price = PRODUCT_PRICES[product];
+  if (!price) return;
   if (paymentAmount) paymentAmount.value = "";
   paymentChoices.forEach((choice) => choice.classList.toggle("active", choice.dataset.paymentProduct === product));
   if (paymentMessage) paymentMessage.textContent = `Send exactly ${price} USDT on the selected network.`;
@@ -184,10 +225,70 @@ if (document.querySelector("#submitPayment")) {
       unlockLinks.hidden = true;
       return;
     }
-    paymentMessage.textContent = "Payment submitted for manual review. Access links are shown below pending confirmation.";
-    unlockLinks.hidden = false;
+    paymentMessage.textContent = "Payment details submitted. Message our Telegram account for manual payment confirmation.";
+    if (selectedProduct === "chartbot") {
+      const storageKey = getChartbotStorageKey();
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify({ status: "pending", amount: requiredAmount, transactionHash, submittedAt: new Date().toISOString() }));
+        refreshChartbotAccess();
+      }
+      unlockLinks.hidden = true;
+      paymentMessage.textContent = "Payment details submitted. Your subscription is pending manual confirmation.";
+    } else {
+      unlockLinks.hidden = false;
+    }
   });
 }
+
+const chartImage = document.querySelector("#chartImage");
+const chartPreview = document.querySelector("#chartPreview");
+const chartPreviewWrap = document.querySelector("#chartPreviewWrap");
+const analyzeChart = document.querySelector("#analyzeChart");
+const analysisMessage = document.querySelector("#analysisMessage");
+let chartPreviewUrl = null;
+
+function clearChartPreview() {
+  if (chartPreviewUrl) URL.revokeObjectURL(chartPreviewUrl);
+  chartPreviewUrl = null;
+  if (chartImage) chartImage.value = "";
+  if (chartPreview) chartPreview.removeAttribute("src");
+  if (chartPreviewWrap) chartPreviewWrap.hidden = true;
+  if (analyzeChart) analyzeChart.disabled = true;
+}
+
+if (chartImage) {
+  chartImage.addEventListener("change", () => {
+    const file = chartImage.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) {
+      clearChartPreview();
+      analysisMessage.textContent = "Choose an image file smaller than 10 MB.";
+      return;
+    }
+    if (chartPreviewUrl) URL.revokeObjectURL(chartPreviewUrl);
+    chartPreviewUrl = URL.createObjectURL(file);
+    chartPreview.src = chartPreviewUrl;
+    chartPreviewWrap.hidden = false;
+    analyzeChart.disabled = false;
+    analysisMessage.textContent = "Screenshot ready. The automated analysis service is not connected yet.";
+  });
+}
+
+document.querySelector("#removeChart")?.addEventListener("click", clearChartPreview);
+analyzeChart?.addEventListener("click", () => {
+  const storageKey = getChartbotStorageKey();
+  const subscription = storageKey ? JSON.parse(localStorage.getItem(storageKey) || "null") : null;
+  if (!subscription) {
+    analysisMessage.textContent = "Subscribe for 30 USDT to request your first analysis. Your screenshot will stay selected.";
+    openPaymentModal("chartbot");
+    return;
+  }
+  if (subscription.status === "pending") {
+    analysisMessage.textContent = "Your payment is awaiting manual confirmation. Automated chart analysis also requires the analysis service to be connected.";
+    return;
+  }
+  analysisMessage.textContent = "Your screenshot is ready, but no analysis was sent. Connect a secure analysis service to enable chart results.";
+});
 
 if (document.querySelector("#playLesson")) {
   document.querySelector("#playLesson").addEventListener("click", () => {
